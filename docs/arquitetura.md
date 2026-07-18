@@ -19,8 +19,13 @@ Todo acesso a dados é protegido por **Row Level Security (RLS)**.
 - **user_roles** — `id`, `user_id` (→ `auth.users`), `role` (`app_role`), `company_id`
   (nulo para `admin_plataforma`), `unique(user_id, role)`. Tabela **separada** de papéis.
 - **cost_centers** — centros de custo: `id`, `company_id`, `nome`, `codigo`, `ativo`, `created_at`.
-- **mileage_rates** — valor do milheiro (global): `id`, `programa` (`mileage_program`, único),
-  `valor_milheiro` (numeric — valor de 1.000 milhas em R$), `updated_at`, `updated_by`.
+- **mileage_rates** — valor do milheiro (global), por programa e por sub-tipo: `id`, `programa`
+  (`mileage_program`), `sub_tipo` (text, `NULL` = valor padrão do programa), `sub_tipo_norm`
+  (normalizado para matching), `valor_milheiro` (numeric — valor de 1.000 milhas em R$), `updated_at`,
+  `updated_by`. Unicidade por `(programa, coalesce(sub_tipo_norm,''))` — 1 padrão + N overrides.
+- **observed_mileage_types** — famílias de milha (`TipoMilhas`) realmente retornadas pela IN8, para o
+  admin precificar: `programa`, `sub_tipo`, `sub_tipo_norm`, `ocorrencias`, `primeira_vez`,
+  `ultima_vez` (UPSERT pela edge function). SELECT para autenticados; escrita só service role.
 - **travel_policies** — políticas de viagem (por empresa): `id`, `company_id`, `nome`, `descricao`,
   `limite_valor_viagem` (numeric, null = sem teto), `classes_permitidas` (text[]),
   `antecedencia_minima_dias`, `exige_aprovacao` (`'sempre'` | `'somente_fora_politica'`),

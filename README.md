@@ -54,11 +54,19 @@ preço_R$ = (total_de_milhas / 1000) × valor_do_milheiro_do_programa + taxa_de_
 Não há markup adicional — a margem já está embutida no valor do milheiro configurável pelo
 `admin_plataforma`. Valores iniciais por 1.000 milhas:
 
-| Programa | Companhia | Valor do milheiro |
-|----------|-----------|-------------------|
+| Programa | Companhia | Valor do milheiro (padrão) |
+|----------|-----------|----------------------------|
 | `azul`   | Azul      | R$ 18,50 |
 | `smiles` | Gol       | R$ 19,00 |
 | `latam`  | Latam     | R$ 29,00 |
+
+O milheiro é configurável **por sub-tipo de milha** (família de tarifa), não só por programa —
+porque famílias como *clube smiles* e *diamante* (Smiles) valem menos no mercado que a milha avulsa.
+O valor por programa é o **padrão** (fallback); o `admin_plataforma` pode cadastrar overrides por
+sub-tipo (ex.: `clube smiles` R$ 16,50, `diamante` R$ 14,00). A busca casa o `TipoMilhas` retornado
+pela IN8 com o override (match exato, depois por palavra-chave, escolhendo o menor valor que casar) e,
+na falta, usa o padrão do programa. As famílias realmente retornadas pela API são registradas em
+`observed_mileage_types` para o admin precificá-las.
 
 Para emissão **tarifada** (dinheiro), o preço vem pronto da API (já inclui tarifa + taxas).
 
@@ -88,6 +96,14 @@ A rota `/gestao` (gestor da empresa / plataforma) reúne KPIs (gasto total, econ
 nº de viagens, ticket médio, pendentes, % emitidas com milhas), gráficos (gasto por mês, por centro de
 custo, por companhia, por status, milhas × tarifado), próximas viagens, últimas solicitações e
 exportação CSV — com filtros por período, centro de custo e (na plataforma) empresa.
+
+## Mobile / PWA
+
+O app é responsivo mobile-first e **instalável como PWA** ("Adicionar à tela inicial", modo
+`standalone`, tema azul-marinho). No celular a navegação usa um header com menu (drawer) e uma barra
+de abas inferior contextual ao papel; a busca traz filtros em bottom sheet e o comparativo
+Milhas/Tarifado/Todos empilhado; as telas de back-office (viagens, aprovações, operações, gestão)
+renderizam listas de cards no lugar de tabelas largas. O desktop mantém a sidebar e as tabelas.
 
 ## Arquitetura
 
