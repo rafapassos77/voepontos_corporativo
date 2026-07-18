@@ -44,7 +44,8 @@ a solicitação como emitida.
 
 ## Precificação (regra central do negócio)
 
-O preço em Reais é calculado **no backend** (edge function), nunca no cliente:
+Para emissão **com milhas**, o preço em Reais é calculado **no backend** (edge function), nunca no
+cliente:
 
 ```
 preço_R$ = (total_de_milhas / 1000) × valor_do_milheiro_do_programa + taxa_de_embarque
@@ -58,6 +59,35 @@ Não há markup adicional — a margem já está embutida no valor do milheiro c
 | `azul`   | Azul      | R$ 18,50 |
 | `smiles` | Gol       | R$ 19,00 |
 | `latam`  | Latam     | R$ 29,00 |
+
+Para emissão **tarifada** (dinheiro), o preço vem pronto da API (já inclui tarifa + taxas).
+
+## Comparação Milhas × Tarifado × Todos
+
+A busca consulta a IN8 pelas duas modalidades na mesma requisição (`SomenteMilhas:false`,
+`SomentePagante:false`). Cada voo carrega `emissao_milhas` e/ou `emissao_tarifado`, e o backend
+calcula a **economia** de emitir com milhas (`economia = preço_tarifado − preço_milhas`). Na página
+de busca o usuário alterna entre **Milhas | Tarifado | Todos** (no modo Todos as duas formas aparecem
+lado a lado, com destaque verde na mais vantajosa) — a mesma experiência do White Label Buscador 2.0.
+A modalidade escolhida (`tipo_emissao`) e a economia estimada ficam gravadas na solicitação para
+auditoria e para o painel de gestão.
+
+## Políticas de Viagem
+
+Cada empresa define **políticas de viagem** (limite de orçamento por bilhete, classes permitidas,
+antecedência mínima, se permite emissão tarifada, prestação de contas, canal de suporte) e as vincula
+aos funcionários. O enquadramento é avaliado **no banco** por um trigger `security definer` no momento
+da solicitação: monta a lista de violações, marca `dentro_politica`, exige justificativa quando fora
+da política e pode **auto-aprovar** solicitações dentro da política (quando a política usa
+`exige_aprovacao = 'somente_fora_politica'`). O cliente é apenas informativo — a regra é aplicada no
+servidor.
+
+## Gestão de Viagens Corporativas
+
+A rota `/gestao` (gestor da empresa / plataforma) reúne KPIs (gasto total, economia gerada com milhas,
+nº de viagens, ticket médio, pendentes, % emitidas com milhas), gráficos (gasto por mês, por centro de
+custo, por companhia, por status, milhas × tarifado), próximas viagens, últimas solicitações e
+exportação CSV — com filtros por período, centro de custo e (na plataforma) empresa.
 
 ## Arquitetura
 
@@ -78,11 +108,12 @@ Documentação detalhada:
 | Rota | Descrição | Papéis |
 |------|-----------|--------|
 | `/login` | Acesso (sistema fechado) | todos |
-| `/buscar` | Busca de voos + resultados (preço em R$; milhas no detalhe) | solicitante+ |
+| `/buscar` | Busca de voos + comparação Milhas/Tarifado/Todos (preço em R$; milhas no detalhe) | solicitante+ |
 | `/minhas-viagens` | Acompanhamento das próprias solicitações | solicitante+ |
-| `/aprovacoes` | Aprovar/rejeitar solicitações da empresa | aprovador, admin_empresa |
+| `/aprovacoes` | Aprovar/rejeitar solicitações da empresa (destaque para fora da política) | aprovador, admin_empresa |
 | `/operacoes` | Fila de emissão manual (registrar localizador) | admin_plataforma |
-| `/admin` | Empresas, Usuários, Centros de Custo, Valor do Milheiro | admin_empresa, admin_plataforma |
+| `/gestao` | Painel de gestão: KPIs, gráficos, próximas viagens, export CSV | admin_empresa, admin_plataforma |
+| `/admin` | Empresas, Usuários, Centros de Custo, Políticas de Viagem, Valor do Milheiro | admin_empresa, admin_plataforma |
 
 ## Contas demo
 
