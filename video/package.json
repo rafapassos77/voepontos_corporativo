@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "studio": "remotion studio",
-    "render": "remotion render VoePontos out/voepontos.mp4"
+    "render": "remotion render VoePontos out/voepontos.mp4",
+    "narrar": "node scripts/narrar.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.1.0",

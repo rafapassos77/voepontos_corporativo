@@ -1,5 +1,6 @@
 import React from 'react';
-import {AbsoluteFill, Series} from 'remotion';
+import {AbsoluteFill, Audio, Sequence, Series, staticFile} from 'remotion';
+import narration from './narration.generated.json';
 import {FPS, colors} from './theme';
 import {ScreenScene, ScreenSceneProps} from './ScreenScene';
 import {
@@ -31,18 +32,18 @@ const storyScenes = {
 };
 
 type Scene =
-  | {kind: keyof typeof storyScenes; seconds: number}
-  | ({kind: 'screen'; seconds: number} & ScreenSceneProps);
+  | {id: string; kind: keyof typeof storyScenes; seconds: number}
+  | ({id: string; kind: 'screen'; seconds: number} & ScreenSceneProps);
 
 // Roteiro baseado na apresentação "Voe Pontos — Parceria Estratégica" (out/2026).
 // Coordenadas de câmera e desfoque em px das gravações originais (2558 px de largura).
 export const scenes: Scene[] = [
-  {kind: 'hook', seconds: 6},
-  {kind: 'brand', seconds: 5},
-  {kind: 'base', seconds: 6.5},
-  {kind: 'credentials', seconds: 5.5},
+  {id: '01-gancho', kind: 'hook', seconds: 6},
+  {id: '02-marca', kind: 'brand', seconds: 5},
+  {id: '03-base', kind: 'base', seconds: 6.5},
+  {id: '04-credenciais', kind: 'credentials', seconds: 5.5},
   {
-    kind: 'screen',
+    id: '05-busca', kind: 'screen',
     seconds: 5.6,
     src: '01-busca.mp4',
     trimBeforeSec: 0,
@@ -56,7 +57,7 @@ export const scenes: Scene[] = [
     ],
   },
   {
-    kind: 'screen',
+    id: '06-resultado', kind: 'screen',
     seconds: 3.4,
     src: '01-busca.mp4',
     trimBeforeSec: 19,
@@ -70,7 +71,7 @@ export const scenes: Scene[] = [
     ],
   },
   {
-    kind: 'screen',
+    id: '07-comparacao', kind: 'screen',
     seconds: 7,
     src: '02-resultados.mp4',
     trimBeforeSec: 0.5,
@@ -85,7 +86,7 @@ export const scenes: Scene[] = [
     ],
   },
   {
-    kind: 'screen',
+    id: '08-conferencia', kind: 'screen',
     seconds: 4,
     src: '02-resultados.mp4',
     trimBeforeSec: 13.6,
@@ -101,7 +102,7 @@ export const scenes: Scene[] = [
     ],
   },
   {
-    kind: 'screen',
+    id: '09-passageiros', kind: 'screen',
     seconds: 2.8,
     src: '03-pagamento.mp4',
     trimBeforeSec: 0,
@@ -114,7 +115,7 @@ export const scenes: Scene[] = [
     blur: [{x: 620, y: 140, w: 880, h: 560, from: 0, to: 99}],
   },
   {
-    kind: 'screen',
+    id: '10-pagamento', kind: 'screen',
     seconds: 7.4,
     src: '03-pagamento.mp4',
     trimBeforeSec: 7.6,
@@ -129,32 +130,59 @@ export const scenes: Scene[] = [
       {t: 7.4, cx: 1060, cy: 700, w: 1100},
     ],
   },
-  {kind: 'team', seconds: 6},
-  {kind: 'simulation', seconds: 8},
-  {kind: 'scale', seconds: 6.5},
-  {kind: 'conditions', seconds: 6},
-  {kind: 'activation', seconds: 5},
-  {kind: 'statement', seconds: 4.5},
-  {kind: 'cta', seconds: 6.5},
+  {id: '11-equipe', kind: 'team', seconds: 6},
+  {id: '12-simulacao', kind: 'simulation', seconds: 8},
+  {id: '13-escala', kind: 'scale', seconds: 6.5},
+  {id: '14-condicoes', kind: 'conditions', seconds: 6},
+  {id: '15-ativacao', kind: 'activation', seconds: 5},
+  {id: '16-frase', kind: 'statement', seconds: 4.5},
+  {id: '17-contato', kind: 'cta', seconds: 6.5},
 ];
 
-export const totalFrames = scenes.reduce((acc, s) => acc + Math.round(s.seconds * FPS), 0);
+// Narração: segundos de cada áudio em public/narracao/<id>.mp3 (gerado por scripts/narrar.mjs).
+const narrationSeconds = narration as Record<string, number>;
+const VOICE_LEAD = 0.3; // respiro antes da fala
+const VOICE_TAIL = 0.5; // respiro depois da fala
+
+// Duração final da cena: a do roteiro ou, se a fala for maior, o necessário para caber nela.
+const sceneSeconds = (s: Scene) => {
+  const voice = narrationSeconds[s.id];
+  return voice ? Math.max(s.seconds, VOICE_LEAD + voice + VOICE_TAIL) : s.seconds;
+};
+
+// Ao esticar uma cena de tela, desacelera a gravação e a câmera para cobrir o mesmo trecho.
+const stretchScreen = (s: Extract<Scene, {kind: 'screen'}>, seconds: number): ScreenSceneProps => {
+  const k = seconds / s.seconds;
+  return {
+    ...s,
+    playbackRate: s.playbackRate / k,
+    camera: s.camera.map((c) => ({...c, t: c.t * k})),
+    blur: s.blur?.map((b) => ({...b, from: b.from * k, to: b.to * k})),
+  };
+};
+
+export const totalFrames = scenes.reduce((acc, s) => acc + Math.round(sceneSeconds(s) * FPS), 0);
 
 export const VoePontos: React.FC = () => (
   <AbsoluteFill style={{background: colors.navy}}>
     <Series>
-      {scenes.map((s, i) => {
-        const frames = Math.round(s.seconds * FPS);
+      {scenes.map((s) => {
+        const seconds = sceneSeconds(s);
         let body: React.ReactNode;
         if (s.kind === 'screen') {
-          body = <ScreenScene {...s} />;
+          body = <ScreenScene {...stretchScreen(s, seconds)} />;
         } else {
           const Story = storyScenes[s.kind];
           body = <Story />;
         }
         return (
-          <Series.Sequence key={i} durationInFrames={frames}>
+          <Series.Sequence key={s.id} durationInFrames={Math.round(seconds * FPS)}>
             {body}
+            {narrationSeconds[s.id] ? (
+              <Sequence from={Math.round(VOICE_LEAD * FPS)}>
+                <Audio src={staticFile(`narracao/${s.id}.mp3`)} />
+              </Sequence>
+            ) : null}
           </Series.Sequence>
         );
       })}
