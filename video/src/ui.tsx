@@ -18,6 +18,13 @@ export const useCount = (to: number, delay: number, duration = 36) => {
   return interpolate(frame, [delay, delay + duration], [0, to], {...clamp, easing: Easing.out(Easing.cubic)});
 };
 
+// Layout atual: vertical (9:16) ou horizontal (16:9), e a margem lateral correspondente.
+export const useLayout = () => {
+  const {width, height} = useVideoConfig();
+  const v = height > width;
+  return {v, m: v ? 72 : 120};
+};
+
 export const formatInt = (n: number) => Math.round(n).toLocaleString('pt-BR');
 
 type FrameProps = {
@@ -34,20 +41,20 @@ export const Frame: React.FC<FrameProps> = ({tone, eyebrow, footnote, accentBar,
   const {durationInFrames} = useVideoConfig();
   const fade = interpolate(frame, [0, 12, durationInFrames - 12, durationInFrames], [0, 1, 1, 0], clamp);
   const dark = tone === 'navy';
+  const {v, m} = useLayout();
   return (
     <AbsoluteFill style={{background: dark ? colors.navy : colors.light, fontFamily: font}}>
       <AbsoluteFill style={{opacity: fade}}>
         {accentBar ? <div style={{position: 'absolute', left: 0, top: 0, bottom: 0, width: 16, background: colors.cyan}} /> : null}
         <Img
           src={staticFile(dark ? 'logo-white.png' : 'logo-dark.png')}
-          style={{position: 'absolute', left: 120, top: 64, height: 46}}
+          style={{position: 'absolute', left: m, top: v ? 96 : 64, height: v ? 52 : 46}}
         />
         {eyebrow ? (
           <div
             style={{
               position: 'absolute',
-              right: 120,
-              top: 74,
+              ...(v ? {left: m, top: 176} : {right: m, top: 74}),
               fontSize: 24,
               fontWeight: 700,
               letterSpacing: 5,
@@ -63,9 +70,9 @@ export const Frame: React.FC<FrameProps> = ({tone, eyebrow, footnote, accentBar,
           <div
             style={{
               position: 'absolute',
-              left: 120,
-              right: 120,
-              bottom: 40,
+              left: m,
+              right: m,
+              bottom: v ? 72 : 40,
               paddingTop: 16,
               borderTop: `1px solid ${dark ? colors.navyLine : colors.line}`,
               fontSize: 22,

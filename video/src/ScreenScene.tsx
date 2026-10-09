@@ -1,7 +1,7 @@
 import React from 'react';
 import {Easing, OffthreadVideo, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {colors} from './theme';
-import {Frame, Pill, useReveal} from './ui';
+import {Frame, Pill, useLayout, useReveal} from './ui';
 
 // Ponto da câmera em coordenadas da gravação original (px do vídeo).
 // t = segundo da cena; cx/cy = centro do enquadramento; w = largura visível.
@@ -19,10 +19,18 @@ export type ScreenSceneProps = {
   subtitle: string;
   footnote?: string;
   camera: CameraKey[];
+  // Enquadramento para o formato vertical (mais fechado, a tela é estreita).
+  cameraV?: CameraKey[];
   blur?: BlurBox[];
 };
 
-const CARD = {x: 120, y: 268, w: 1680, h: 716};
+const CARD_H = {x: 120, y: 268, w: 1680, h: 716};
+const CARD_V = {x: 72, y: 600, w: 936, h: 1040};
+// Tamanho das gravações originais, para não enquadrar além das bordas.
+const SRC = {w: 2558, h: 980};
+
+const clampTo = (value: number, visible: number, total: number) =>
+  visible >= total ? total / 2 : Math.min(Math.max(value, visible / 2), total - visible / 2);
 
 const cameraAt = (keys: CameraKey[], t: number) => {
   if (keys.length === 1) return keys[0];
@@ -48,8 +56,11 @@ export const ScreenScene: React.FC<ScreenSceneProps> = ({
   subtitle,
   footnote = 'Captura do novo sistema. Preços e disponibilidade são demonstrativos e não constituem oferta.',
   camera,
+  cameraV,
   blur = [],
 }) => {
+  const {v} = useLayout();
+  const CARD = v ? CARD_V : CARD_H;
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = frame / fps;
@@ -57,22 +68,36 @@ export const ScreenScene: React.FC<ScreenSceneProps> = ({
   const subIn = useReveal(8, 16);
   const cardIn = interpolate(frame, [0, 20], [0.97, 1], {extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
 
-  const cam = cameraAt(camera, t);
+  const cam = cameraAt(v && cameraV ? cameraV : camera, t);
   const scale = CARD.w / cam.w;
-  const tx = CARD.w / 2 - cam.cx * scale;
-  const ty = CARD.h / 2 - cam.cy * scale;
+  const cx = clampTo(cam.cx, cam.w, SRC.w);
+  const cy = clampTo(cam.cy, CARD.h / scale, SRC.h);
+  const tx = CARD.w / 2 - cx * scale;
+  const ty = CARD.h / 2 - cy * scale;
 
   return (
     <Frame tone="light" eyebrow="A nova plataforma" footnote={footnote}>
-      <div style={{position: 'absolute', left: CARD.x, top: 136, ...titleIn}}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 24}}>
-          <Pill>{step}</Pill>
-          <span style={{fontSize: 56, fontWeight: 800, letterSpacing: -1, color: colors.ink}}>{title}</span>
+      {v ? (
+        <div style={{position: 'absolute', left: CARD.x, right: CARD.x, top: 250, bottom: 1920 - CARD.y + 36, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 20}}>
+          <div style={titleIn}>
+            <Pill>{step}</Pill>
+          </div>
+          <div style={{...titleIn, fontSize: 60, fontWeight: 800, lineHeight: 1.08, letterSpacing: -1, color: colors.ink}}>{title}</div>
+          <div style={{...subIn, fontSize: 32, lineHeight: 1.35, color: colors.slate}}>{subtitle}</div>
         </div>
-      </div>
-      <div style={{position: 'absolute', left: CARD.x, top: 214, fontSize: 30, color: colors.slate, ...subIn}}>
-        {subtitle}
-      </div>
+      ) : (
+        <>
+          <div style={{position: 'absolute', left: CARD.x, top: 136, ...titleIn}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 24}}>
+              <Pill>{step}</Pill>
+              <span style={{fontSize: 56, fontWeight: 800, letterSpacing: -1, color: colors.ink}}>{title}</span>
+            </div>
+          </div>
+          <div style={{position: 'absolute', left: CARD.x, top: 214, fontSize: 30, color: colors.slate, ...subIn}}>
+            {subtitle}
+          </div>
+        </>
+      )}
       <div
         style={{
           position: 'absolute',

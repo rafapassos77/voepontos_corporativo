@@ -13,7 +13,8 @@ Identidade visual (cores, fonte Inter e logo em `public/logo-*.png`) extraída d
    `01-busca.mp4`, `02-resultados.mp4`, `03-pagamento.mp4`
 2. `npm install`
 3. `npm run studio` — abre o editor visual no navegador para ajustar.
-4. `npm run render` — gera `out/voepontos.mp4`.
+4. `npm run render` — gera `out/voepontos.mp4` (16:9).
+5. `npm run render:vertical` — gera `out/voepontos-vertical.mp4` (9:16, para Reels, Stories e WhatsApp).
 
 Em ambientes sem acesso ao download do Chrome do Remotion, aponte para um Chromium local:
 `REMOTION_BROWSER=/caminho/para/headless_shell npm run render`.

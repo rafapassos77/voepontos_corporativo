@@ -51,6 +51,7 @@ export const scenes: Scene[] = [
     step: '01 / 05 Busca',
     title: 'Encontre alternativas para cada viagem.',
     subtitle: 'Trecho, data, passageiros, classe e companhias em uma única tela.',
+    cameraV: [{t: 0, cx: 1050, cy: 490, w: 880}, {t: 2.8, cx: 1450, cy: 490, w: 880}, {t: 5.6, cx: 1580, cy: 490, w: 880}],
     camera: [
       {t: 0, cx: 1320, cy: 430, w: 1500},
       {t: 5.6, cx: 1360, cy: 470, w: 1400},
@@ -65,6 +66,7 @@ export const scenes: Scene[] = [
     step: '02 / 05 Comparação',
     title: 'O valor total, já em reais.',
     subtitle: 'Cada opção de voo mostra o preço final e como será emitida.',
+    cameraV: [{t: 0, cx: 1450, cy: 560, w: 880}, {t: 3.4, cx: 1640, cy: 500, w: 640}],
     camera: [
       {t: 0, cx: 1480, cy: 560, w: 1350},
       {t: 3.4, cx: 1560, cy: 520, w: 1000},
@@ -79,6 +81,7 @@ export const scenes: Scene[] = [
     step: '02 / 05 Comparação',
     title: 'Milhas e tarifado, no mesmo ambiente.',
     subtitle: 'Veja por categoria — milhas, tarifado ou todos — e use os filtros.',
+    cameraV: [{t: 0, cx: 1640, cy: 500, w: 640}, {t: 2.5, cx: 1500, cy: 560, w: 880}, {t: 7, cx: 1500, cy: 560, w: 880}],
     camera: [
       {t: 0, cx: 1560, cy: 520, w: 1000},
       {t: 2.5, cx: 1450, cy: 560, w: 1350},
@@ -95,6 +98,7 @@ export const scenes: Scene[] = [
     title: 'Voo, bagagem e taxas à vista.',
     subtitle: 'Itinerário, franquia e composição do valor antes de avançar.',
     footnote: 'Captura do novo sistema. Tarifas e disponibilidade podem mudar até a conclusão da emissão.',
+    cameraV: [{t: 0, cx: 1080, cy: 500, w: 880}, {t: 1.6, cx: 1080, cy: 500, w: 880}, {t: 3.6, cx: 1720, cy: 500, w: 600}],
     camera: [
       {t: 0, cx: 1290, cy: 520, w: 1450},
       {t: 1.6, cx: 1290, cy: 520, w: 1450},
@@ -110,6 +114,7 @@ export const scenes: Scene[] = [
     step: '04 / 05 Passageiros',
     title: 'Dados organizados.',
     subtitle: 'Conferência antes da emissão. Dados pessoais desfocados neste vídeo.',
+    cameraV: [{t: 0, cx: 1450, cy: 490, w: 880}],
     camera: [{t: 0, cx: 1290, cy: 470, w: 1450}],
     // Formulário com nome, nascimento e CPF: sempre desfocado
     blur: [{x: 620, y: 140, w: 880, h: 560, from: 0, to: 99}],
@@ -124,6 +129,7 @@ export const scenes: Scene[] = [
     title: 'Pagamento e regras, na mesma jornada.',
     subtitle: 'Pix, boleto e faturado. Remarcação, cancelamento e aceite antes de finalizar.',
     footnote: 'Captura do novo sistema. Faturamento, prazo e limite dependem de análise e condições comerciais aprovadas.',
+    cameraV: [{t: 0, cx: 1080, cy: 520, w: 880}, {t: 5.5, cx: 1080, cy: 560, w: 880}, {t: 7.4, cx: 1060, cy: 700, w: 700}],
     camera: [
       {t: 0, cx: 1200, cy: 520, w: 1450},
       {t: 5.5, cx: 1200, cy: 560, w: 1450},
@@ -157,6 +163,7 @@ const stretchScreen = (s: Extract<Scene, {kind: 'screen'}>, seconds: number): Sc
     ...s,
     playbackRate: s.playbackRate / k,
     camera: s.camera.map((c) => ({...c, t: c.t * k})),
+    cameraV: s.cameraV?.map((c) => ({...c, t: c.t * k})),
     blur: s.blur?.map((b) => ({...b, from: b.from * k, to: b.to * k})),
   };
 };

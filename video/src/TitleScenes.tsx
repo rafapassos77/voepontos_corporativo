@@ -1,7 +1,7 @@
 import React from 'react';
 import {Easing, interpolate, useCurrentFrame} from 'remotion';
 import {colors} from './theme';
-import {Frame, Pill, formatInt, useCount, useReveal} from './ui';
+import {Frame, Pill, formatInt, useCount, useLayout, useReveal} from './ui';
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
@@ -14,23 +14,38 @@ const Column: React.FC<{children: React.ReactNode; top?: number; gap?: number; c
   top = 180,
   gap = 32,
   center,
-}) => (
-  <div
-    style={{
-      position: 'absolute',
-      left: 120,
-      right: 120,
-      top: center ? 0 : top,
-      bottom: center ? 0 : undefined,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: center ? 'center' : 'flex-start',
-      gap,
-    }}
-  >
-    {children}
-  </div>
-);
+}) => {
+  const {v, m} = useLayout();
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: m,
+        right: m,
+        top: v ? 240 : center ? 0 : top,
+        bottom: v ? 200 : center ? 0 : undefined,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: v || center ? 'center' : 'flex-start',
+        gap,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+// Quebra de linha só no horizontal; no vertical o texto quebra naturalmente.
+const Br: React.FC = () => {
+  const {v} = useLayout();
+  return v ? <> </> : <br />;
+};
+
+// Linha no horizontal, coluna no vertical.
+const Row: React.FC<{gap: number; style?: React.CSSProperties; children: React.ReactNode}> = ({gap, style, children}) => {
+  const {v} = useLayout();
+  return <div style={{display: 'flex', flexDirection: v ? 'column' : 'row', gap: v ? Math.min(gap, 32) : gap, ...style}}>{children}</div>;
+};
 
 // 1. Gancho: a dor da agência, contada como história.
 export const Hook: React.FC = () => {
@@ -58,13 +73,14 @@ export const Brand: React.FC = () => {
   const b = useReveal(20);
   const c = useReveal(38);
   const d = useReveal(56);
+  const {v} = useLayout();
   return (
     <Frame tone="navy" eyebrow="Proposta de parceria estratégica" accentBar>
       <Column center gap={28}>
         <div style={a}>
           <Pill dark>Plataforma B2B</Pill>
         </div>
-        <div style={{...b, fontSize: 132, fontWeight: 800, lineHeight: 1.02, letterSpacing: -3, color: colors.white}}>
+        <div style={{...b, fontSize: v ? 124 : 132, fontWeight: 800, lineHeight: 1.02, letterSpacing: -3, color: colors.white}}>
           Mais resultado no aéreo.
         </div>
         <div style={{...c, fontSize: 64, fontWeight: 700, lineHeight: 1.15, color: colors.cyan}}>
@@ -102,7 +118,7 @@ export const Base: React.FC = () => {
     <Frame tone="navy" eyebrow="Base operacional" footnote="Indicadores institucionais da Voe Pontos, outubro de 2026.">
       <Column top={170} gap={48}>
         <div style={{...title, ...H2, color: colors.white}}>Uma plataforma com operação por trás.</div>
-        <div style={{display: 'flex', gap: 96}}>
+        <Row gap={96}>
           <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: 40}}>
             <div style={s1}>
               <div style={{fontSize: 160, fontWeight: 800, lineHeight: 1, letterSpacing: -4, color: colors.cyan}}>
@@ -124,7 +140,7 @@ export const Base: React.FC = () => {
             <Bullet delay={64} title="Fornecimento de milhas" text="A agência não precisa manter estoque de pontos." />
             <Bullet delay={78} title="Suporte humano" text="Emissores no grupo dedicado de atendimento da agência." />
           </div>
-        </div>
+        </Row>
       </Column>
     </Frame>
   );
@@ -136,6 +152,7 @@ export const Credentials: React.FC = () => {
   const b = useReveal(22);
   const c = useReveal(44);
   const ten = useCount(10, 22, 30);
+  const {v} = useLayout();
   return (
     <Frame
       tone="light"
@@ -145,20 +162,20 @@ export const Credentials: React.FC = () => {
       <Column top={190} gap={56}>
         <div style={{...a, ...H2, color: colors.ink}}>
           Escolhida por quem mais emite.
-          <br />
+          <Br />
           Parceira de quem é referência.
         </div>
-        <div style={{...b, display: 'flex', alignItems: 'center', gap: 48}}>
+        <Row gap={48} style={{...b, alignItems: v ? 'flex-start' : 'center'}}>
           <div style={{fontSize: 200, fontWeight: 800, lineHeight: 1, letterSpacing: -6, color: colors.teal}}>
             {formatInt(ten)}
           </div>
           <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
             <Pill>Somos fonte primária de abastecimento das</Pill>
-            <div style={{fontSize: 40, fontWeight: 600, lineHeight: 1.3, color: colors.ink, width: 1100}}>
+            <div style={{fontSize: 40, fontWeight: 600, lineHeight: 1.3, color: colors.ink, maxWidth: 1100}}>
               maiores empresas de grande porte do mercado de emissão de passagens.
             </div>
           </div>
-        </div>
+        </Row>
         <div style={{...c, background: colors.navy, color: colors.white, fontSize: 34, padding: '26px 36px'}}>
           O mesmo abastecimento dos maiores emissores do mercado, agora a serviço da sua agência.
         </div>
@@ -169,10 +186,11 @@ export const Credentials: React.FC = () => {
 
 const FlowStep: React.FC<{label: string; delay: number; last?: boolean}> = ({label, delay, last}) => {
   const frame = useCurrentFrame();
+  const {v} = useLayout();
   const on = interpolate(frame, [delay, delay + 10], [0, 1], clamp);
   const arrow = interpolate(frame, [delay + 8, delay + 22], [0, 1], clamp);
   return (
-    <div style={{display: 'flex', alignItems: 'center', gap: 22, flex: last ? 'none' : 1}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: 22, flex: last || v ? 'none' : 1}}>
       <div
         style={{
           width: 34,
@@ -184,7 +202,7 @@ const FlowStep: React.FC<{label: string; delay: number; last?: boolean}> = ({lab
         }}
       />
       <div style={{fontSize: 40, fontWeight: 700, color: colors.ink, opacity: on}}>{label}</div>
-      {last ? null : (
+      {last || v ? null : (
         <div style={{flex: 1, height: 3, background: colors.line, marginLeft: 12, marginRight: 24}}>
           <div style={{width: `${arrow * 100}%`, height: 3, background: colors.teal}} />
         </div>
@@ -199,6 +217,7 @@ export const Team: React.FC = () => {
   const b = useReveal(16);
   const c = useReveal(28);
   const d = useReveal(130);
+  const {v} = useLayout();
   return (
     <Frame
       tone="light"
@@ -208,9 +227,9 @@ export const Team: React.FC = () => {
       <Column top={170} gap={52}>
         <div style={{...a, ...H2, color: colors.ink}}>
           Sua equipe vende.
-          <br />A nossa equipe cuida da emissão.
+          <Br />A nossa equipe cuida da emissão.
         </div>
-        <div style={{display: 'flex', gap: 44}}>
+        <Row gap={44}>
           <div style={{...b, flex: 1, background: colors.navy, padding: 44, display: 'flex', flexDirection: 'column', gap: 18}}>
             <div><Pill dark>Sua agência</Pill></div>
             <div style={{fontSize: 46, fontWeight: 700, color: colors.white}}>Estratégia e relacionamento</div>
@@ -236,8 +255,8 @@ export const Team: React.FC = () => {
               Fornece as milhas, processa a solicitação, realiza a emissão e presta suporte à agência.
             </div>
           </div>
-        </div>
-        <div style={{display: 'flex', alignItems: 'center'}}>
+        </Row>
+        <div style={v ? {display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 24} : {display: 'flex', alignItems: 'center'}}>
           <FlowStep label="Solicitação" delay={50} />
           <FlowStep label="Validação" delay={70} />
           <FlowStep label="Emissão" delay={90} />
@@ -262,7 +281,7 @@ const SimRow: React.FC<{label: string; value: string; delay: number; strong?: bo
         borderBottom: `1px solid ${colors.line}`,
       }}
     >
-      <div style={{fontSize: 34, color: colors.slate}}>{label}</div>
+      <div style={{fontSize: 34, color: colors.slate, flex: 1, paddingRight: 24}}>{label}</div>
       <div style={{fontSize: 60, fontWeight: 800, letterSpacing: -1, color: strong ? colors.teal : colors.ink}}>{value}</div>
     </div>
   );
@@ -275,6 +294,7 @@ export const Simulation: React.FC = () => {
   const box = useReveal(84);
   const diff = useCount(240, 92, 40);
   const end = useReveal(150);
+  const {v} = useLayout();
   return (
     <Frame
       tone="light"
@@ -284,13 +304,13 @@ export const Simulation: React.FC = () => {
       <Column top={160} gap={22}>
         <div style={{...a, ...H2, color: colors.ink}}>
           A diferença de compra pode
-          <br />
+          <Br />
           virar preço e resultado.
         </div>
         <div style={{...sub, fontSize: 32, color: colors.slate}}>
           Um exemplo para demonstrar a lógica comercial — não uma economia garantida.
         </div>
-        <div style={{display: 'flex', gap: 64, marginTop: 20}}>
+        <Row gap={64} style={{marginTop: 20}}>
           <div style={{flex: 1}}>
             <SimRow label="Tarifa convencional de referência" value="R$ 800" delay={24} />
             <SimRow label="Custo via Voe Pontos no exemplo" value="R$ 520" delay={44} />
@@ -299,7 +319,7 @@ export const Simulation: React.FC = () => {
           <div
             style={{
               ...box,
-              width: 680,
+              width: v ? undefined : 680,
               background: colors.navy,
               padding: 48,
               display: 'flex',
@@ -316,7 +336,7 @@ export const Simulation: React.FC = () => {
             </div>
             <div style={{fontSize: 30, color: colors.mist}}>R$ 760 de venda − R$ 520 de compra</div>
           </div>
-        </div>
+        </Row>
         <div style={{...end, fontSize: 34, fontWeight: 700, color: colors.ink, marginTop: 12}}>
           E o cliente paga R$ 40 abaixo da referência convencional.
         </div>
@@ -328,10 +348,11 @@ export const Simulation: React.FC = () => {
 const ScaleCard: React.FC<{tickets: number; delay: number}> = ({tickets, delay}) => {
   const r = useReveal(delay);
   const value = useCount((tickets * 240) / 1000, delay + 6, 34);
+  const {v} = useLayout();
   return (
-    <div style={{...r, flex: 1, background: colors.navyCard, border: `1px solid ${colors.navyLine}`, padding: 44, display: 'flex', flexDirection: 'column', gap: 20}}>
-      <div style={{fontSize: 40, fontWeight: 700, color: colors.mist}}>{tickets} bilhetes</div>
-      <div style={{fontSize: 92, fontWeight: 800, letterSpacing: -2, color: colors.cyan}}>R$ {formatInt(value)} mil</div>
+    <div style={{...r, flex: 1, background: colors.navyCard, border: `1px solid ${colors.navyLine}`, padding: v ? '28px 36px' : 44, display: 'flex', flexDirection: 'column', gap: v ? 8 : 20}}>
+      <div style={{fontSize: v ? 34 : 40, fontWeight: 700, color: colors.mist}}>{tickets} bilhetes</div>
+      <div style={{fontSize: v ? 80 : 92, fontWeight: 800, letterSpacing: -2, lineHeight: 1.1, color: colors.cyan}}>R$ {formatInt(value)} mil</div>
       <div style={{fontSize: 28, color: colors.mist}}>diferença bruta acumulada</div>
     </div>
   );
@@ -348,19 +369,19 @@ export const Scale: React.FC = () => {
       eyebrow="Escala · análise de sensibilidade"
       footnote="Cálculo ilustrativo: quantidade de bilhetes × R$ 240. Não representa previsão de volume, rentabilidade ou resultado líquido."
     >
-      <Column top={170} gap={36}>
+      <Column top={170} gap={32}>
         <div style={{...a, ...H2, color: colors.white}}>
           Em uma operação com volume,
-          <br />o efeito precisa ser medido.
+          <Br />o efeito precisa ser medido.
         </div>
         <div style={{...b, fontSize: 32, color: colors.mist}}>
           Mantendo, apenas para ilustrar, R$ 240 de diferença bruta por bilhete:
         </div>
-        <div style={{display: 'flex', gap: 36, marginTop: 16}}>
+        <Row gap={36} style={{marginTop: 16}}>
           <ScaleCard tickets={100} delay={22} />
           <ScaleCard tickets={300} delay={40} />
           <ScaleCard tickets={500} delay={58} />
-        </div>
+        </Row>
         <div style={{...c, fontSize: 32, fontWeight: 700, color: colors.white}}>
           O próximo passo é substituir a hipótese por cotações reais da sua agência.
         </div>
@@ -399,6 +420,7 @@ const NoCard: React.FC<{title: string; text: string; delay: number}> = ({title, 
 export const Conditions: React.FC = () => {
   const a = useReveal(0);
   const b = useReveal(96);
+  const {v} = useLayout();
   return (
     <Frame
       tone="light"
@@ -408,10 +430,10 @@ export const Conditions: React.FC = () => {
       <Column top={170} gap={56}>
         <div style={{...a, ...H2, color: colors.ink}}>
           Uma entrada simples.
-          <br />
+          <Br />
           Uma relação para construir resultado.
         </div>
-        <div style={{display: 'flex', gap: 32}}>
+        <div style={v ? {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28} : {display: 'flex', gap: 32}}>
           <NoCard delay={20} title="mensalidade" text="Sem custo mensal de acesso." />
           <NoCard delay={34} title="taxa de adesão" text="Sem cobrança para começar." />
           <NoCard delay={48} title="volume mínimo" text="Uso conforme a sua demanda." />
@@ -430,12 +452,20 @@ export const Conditions: React.FC = () => {
 
 const ActStep: React.FC<{n: string; title: string; text: string; delay: number}> = ({n, title, text, delay}) => {
   const r = useReveal(delay, 20);
+  const {v} = useLayout();
+  const body = (
+    <>
+      <div style={{fontSize: 40, fontWeight: 800, color: colors.ink}}>{title}</div>
+      <div style={{fontSize: 30, lineHeight: 1.35, color: colors.slate, paddingRight: 24}}>{text}</div>
+    </>
+  );
   return (
-    <div style={{...r, flex: 1, display: 'flex', flexDirection: 'column', gap: 22}}>
+    <div style={{...r, flex: 1, display: 'flex', flexDirection: v ? 'row' : 'column', gap: v ? 36 : 22}}>
       <div
         style={{
           width: 88,
           height: 88,
+          flex: 'none',
           borderRadius: 44,
           background: colors.navy,
           color: colors.white,
@@ -448,8 +478,7 @@ const ActStep: React.FC<{n: string; title: string; text: string; delay: number}>
       >
         {n}
       </div>
-      <div style={{fontSize: 40, fontWeight: 800, color: colors.ink}}>{title}</div>
-      <div style={{fontSize: 30, lineHeight: 1.35, color: colors.slate, paddingRight: 24}}>{text}</div>
+      {v ? <div style={{display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 12}}>{body}</div> : body}
     </div>
   );
 };
@@ -459,19 +488,26 @@ export const Activation: React.FC = () => {
   const frame = useCurrentFrame();
   const a = useReveal(0);
   const line = interpolate(frame, [16, 90], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)});
+  const {v} = useLayout();
   return (
     <Frame tone="light" eyebrow="Ativação acompanhada">
       <Column top={190} gap={80}>
         <div style={{...a, ...H2, color: colors.ink}}>
           Da ativação à primeira emissão,
-          <br />
+          <Br />
           com a equipe acompanhando.
         </div>
         <div style={{position: 'relative'}}>
-          <div style={{position: 'absolute', left: 44, right: 300, top: 43, height: 3, background: colors.line}}>
-            <div style={{width: `${line * 100}%`, height: 3, background: colors.teal}} />
-          </div>
-          <div style={{display: 'flex', gap: 24, position: 'relative'}}>
+          {v ? (
+            <div style={{position: 'absolute', left: 43, top: 44, bottom: 200, width: 3, background: colors.line}}>
+              <div style={{height: `${line * 100}%`, width: 3, background: colors.teal}} />
+            </div>
+          ) : (
+            <div style={{position: 'absolute', left: 44, right: 300, top: 43, height: 3, background: colors.line}}>
+              <div style={{width: `${line * 100}%`, height: 3, background: colors.teal}} />
+            </div>
+          )}
+          <div style={{display: 'flex', flexDirection: v ? 'column' : 'row', gap: v ? 56 : 24, position: 'relative'}}>
             <ActStep delay={14} n="01" title="Ficha cadastral" text="Cadastro com apoio da equipe comercial." />
             <ActStep delay={34} n="02" title="Análise e condições" text="Definição de crédito, limite e prazo." />
             <ActStep delay={54} n="03" title="Acessos e treino" text="Credenciais do buscador e grupo de atendimento." />
@@ -487,17 +523,18 @@ export const Activation: React.FC = () => {
 export const Statement: React.FC = () => {
   const a = useReveal(4);
   const b = useReveal(40);
+  const {v} = useLayout();
   return (
     <Frame tone="navy" accentBar>
       <Column center gap={44}>
-        <div style={{...a, fontSize: 108, fontWeight: 800, lineHeight: 1.06, letterSpacing: -2.5, color: colors.white}}>
+        <div style={{...a, fontSize: v ? 96 : 108, fontWeight: 800, lineHeight: 1.06, letterSpacing: -2.5, color: colors.white}}>
           Uma parceria se constrói
-          <br />
+          <Br />
           com resultado demonstrado.
         </div>
         <div style={{...b, fontSize: 40, lineHeight: 1.4, color: colors.mist}}>
           Começamos pelas rotas que sua agência já vende.
-          <br />
+          <Br />
           Evoluímos com a experiência da sua operação.
         </div>
       </Column>
@@ -511,11 +548,12 @@ export const Cta: React.FC = () => {
   const a = useReveal(2);
   const bar = interpolate(frame, [18, 40], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
   const b = useReveal(44);
+  const {v} = useLayout();
   return (
     <Frame tone="navy" eyebrow="Vamos construir essa parceria" accentBar>
       <Column center gap={56}>
         <div style={{...a, ...H1, color: colors.white}}>Vamos testar com o que sua agência já vende.</div>
-        <div style={{overflow: 'hidden', width: 1180}}>
+        <div style={{overflow: 'hidden', width: v ? undefined : 1180}}>
           <div
             style={{
               background: colors.red,
@@ -533,7 +571,7 @@ export const Cta: React.FC = () => {
           <div style={{fontSize: 24, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: colors.cyan}}>
             Contato comercial
           </div>
-          <div style={{display: 'flex', gap: 80, alignItems: 'baseline'}}>
+          <div style={{display: 'flex', flexDirection: v ? 'column' : 'row', gap: v ? 14 : 80, alignItems: v ? 'flex-start' : 'baseline'}}>
             <div style={{fontSize: 44, fontWeight: 700, color: colors.white}}>Thiago Junqueira</div>
             <div style={{fontSize: 44, color: colors.white}}>+55 31 98473-3915</div>
             <div style={{fontSize: 44, color: colors.cyan}}>www.voepontos.com.br</div>

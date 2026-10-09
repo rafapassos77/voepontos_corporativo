@@ -4,7 +4,8 @@
   "scripts": {
     "studio": "remotion studio",
     "render": "remotion render VoePontos out/voepontos.mp4",
-    "narrar": "node scripts/narrar.mjs"
+    "narrar": "node scripts/narrar.mjs",
+    "render:vertical": "remotion render VoePontosVertical out/voepontos-vertical.mp4"
   },
   "dependencies": {
     "@fontsource/inter": "^5.1.0",
