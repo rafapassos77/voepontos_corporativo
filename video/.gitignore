@@ -1,0 +1,4 @@
+node_modules/
+out/
+# Gravações de tela brutas: grandes e com dados pessoais (CPF) — não versionar
+public/*.mp4
