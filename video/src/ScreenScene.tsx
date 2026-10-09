@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  AbsoluteFill,
-  Easing,
-  OffthreadVideo,
-  interpolate,
-  staticFile,
-  useCurrentFrame,
-  useVideoConfig,
-} from 'remotion';
-import {colors, fonts, glow} from './theme';
+import {Easing, OffthreadVideo, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {colors} from './theme';
+import {Frame, Pill, useReveal} from './ui';
 
 // Ponto da câmera em coordenadas da gravação original (px do vídeo).
 // t = segundo da cena; cx/cy = centro do enquadramento; w = largura visível.
@@ -24,16 +17,16 @@ export type ScreenSceneProps = {
   step: string;
   title: string;
   subtitle: string;
+  footnote?: string;
   camera: CameraKey[];
   blur?: BlurBox[];
 };
 
-const CARD = {x: 120, y: 236, w: 1680, h: 790};
-const FADE = 12;
+const CARD = {x: 120, y: 268, w: 1680, h: 716};
 
 const cameraAt = (keys: CameraKey[], t: number) => {
-  const times = keys.map((k) => k.t);
   if (keys.length === 1) return keys[0];
+  const times = keys.map((k) => k.t);
   const opts = {
     easing: Easing.inOut(Easing.cubic),
     extrapolateLeft: 'clamp' as const,
@@ -53,24 +46,16 @@ export const ScreenScene: React.FC<ScreenSceneProps> = ({
   step,
   title,
   subtitle,
+  footnote = 'Captura do novo sistema. Preços e disponibilidade são demonstrativos e não constituem oferta.',
   camera,
   blur = [],
 }) => {
   const frame = useCurrentFrame();
-  const {fps, durationInFrames} = useVideoConfig();
+  const {fps} = useVideoConfig();
   const t = frame / fps;
-
-  const fade = interpolate(
-    frame,
-    [0, FADE, durationInFrames - FADE, durationInFrames],
-    [0, 1, 1, 0],
-    {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
-  );
-  const rise = interpolate(frame, [0, 18], [24, 0], {
-    extrapolateRight: 'clamp',
-    easing: Easing.out(Easing.cubic),
-  });
-  const subtitleIn = interpolate(frame, [8, 26], [0, 1], {extrapolateRight: 'clamp'});
+  const titleIn = useReveal(0, 20);
+  const subIn = useReveal(8, 16);
+  const cardIn = interpolate(frame, [0, 20], [0.97, 1], {extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
 
   const cam = cameraAt(camera, t);
   const scale = CARD.w / cam.w;
@@ -78,48 +63,16 @@ export const ScreenScene: React.FC<ScreenSceneProps> = ({
   const ty = CARD.h / 2 - cam.cy * scale;
 
   return (
-    <AbsoluteFill style={{background: glow, fontFamily: fonts.text, opacity: fade}}>
-      <div
-        style={{
-          position: 'absolute',
-          left: CARD.x,
-          top: 64,
-          width: CARD.w,
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 28,
-          transform: `translateY(${rise}px)`,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 26,
-            fontWeight: 700,
-            letterSpacing: 6,
-            textTransform: 'uppercase',
-            color: colors.amber,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {step}
-        </span>
-        <span style={{fontFamily: fonts.display, fontSize: 60, fontWeight: 400, color: colors.cream}}>
-          {title}
-        </span>
+    <Frame tone="light" eyebrow="A nova plataforma" footnote={footnote}>
+      <div style={{position: 'absolute', left: CARD.x, top: 136, ...titleIn}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: 24}}>
+          <Pill>{step}</Pill>
+          <span style={{fontSize: 56, fontWeight: 800, letterSpacing: -1, color: colors.ink}}>{title}</span>
+        </div>
       </div>
-      <div
-        style={{
-          position: 'absolute',
-          left: CARD.x,
-          top: 158,
-          fontSize: 30,
-          color: colors.mist,
-          opacity: subtitleIn,
-        }}
-      >
+      <div style={{position: 'absolute', left: CARD.x, top: 214, fontSize: 30, color: colors.slate, ...subIn}}>
         {subtitle}
       </div>
-
       <div
         style={{
           position: 'absolute',
@@ -128,9 +81,10 @@ export const ScreenScene: React.FC<ScreenSceneProps> = ({
           width: CARD.w,
           height: CARD.h,
           overflow: 'hidden',
-          borderRadius: 28,
-          background: '#ffffff',
-          boxShadow: '0 40px 100px rgba(0,0,0,0.45)',
+          background: colors.white,
+          border: `1px solid ${colors.line}`,
+          boxShadow: '0 30px 80px rgba(23,38,61,0.18)',
+          transform: `scale(${cardIn})`,
         }}
       >
         <div
@@ -161,13 +115,13 @@ export const ScreenScene: React.FC<ScreenSceneProps> = ({
                   width: b.w,
                   height: b.h,
                   backdropFilter: 'blur(18px)',
-                  background: 'rgba(247,243,236,0.35)',
+                  background: 'rgba(245,247,250,0.35)',
                   borderRadius: 16,
                 }}
               />
             ))}
         </div>
       </div>
-    </AbsoluteFill>
+    </Frame>
   );
 };

@@ -1,8 +1,11 @@
 # Vídeo de demonstração (Remotion)
 
-Vídeo de ~46 s (1920×1080, 30 fps) que conta a história do VoePontos e mostra o fluxo real de emissão:
-busca → resultado em R$ → Milhas/Tarifado/Todos → confirmação (milhas × valor) → passageiro (dados
-desfocados) → pagamento faturado.
+Vídeo de ~1min36 (1920×1080, 30 fps) baseado na apresentação "Voe Pontos — Parceria Estratégica"
+(out/2026), voltado a agências de viagens: gancho → promessa → base operacional e credenciais → as
+5 etapas da nova plataforma (gravações reais, dados pessoais desfocados) → divisão de papéis →
+simulação ilustrativa e escala → condições comerciais → ativação → chamada com contato comercial.
+
+Identidade visual (cores, fonte Inter e logo em `public/logo-*.png`) extraída da apresentação.
 
 ## Como usar
 
@@ -19,5 +22,6 @@ Em ambientes sem acesso ao download do Chrome do Remotion, aponte para um Chromi
 
 - `src/VoePontos.tsx` — roteiro: ordem das cenas, duração, trechos das gravações, textos, câmera
   (zoom/pan em px da gravação original) e áreas desfocadas.
-- `src/TitleScenes.tsx` — cenas de texto (abertura, marca, frase final, encerramento).
-- `src/theme.ts` — cores e fontes (as mesmas da apresentação).
+- `src/TitleScenes.tsx` — cenas de narrativa (gancho, marca, números, simulação, condições, contato).
+- `src/ui.tsx` — moldura das cenas (logo, rótulo, rodapé) e animações reutilizáveis.
+- `src/theme.ts` — paleta e fonte da marca.
